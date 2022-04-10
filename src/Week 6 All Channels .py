@@ -22,7 +22,7 @@ scaler = StandardScaler()
 window = 240
 latency = 0
 channel = 11 - 1  # cz
-# channels = np.array([10,33,48,50,52,55,59,61])
+#channels = np.array([10,33,48,50,52,55,59,61])
 channels = np.arange(64)
 
 freq = 240
@@ -32,7 +32,7 @@ highcut_freq = 20
 from scipy.fft import rfft, irfft, rfftfreq, fft, fftfreq, ifft
 
 from scipy.signal import butter, lfilter
-x1
+
 
 def butter_bandpass(lowcut, highcut, fs):
     nyq = 0.5 * fs
@@ -106,17 +106,33 @@ matrix = np.array([['A', 'B', 'C', 'D', 'E', 'F'], ['G', 'H', 'I', 'J', 'K', 'L'
                    ['S', 'T', 'U', 'V', 'W', 'X'], ['Y', 'Z', '1', '2', '3', '4'], ['5', '6', '7', '8', '9', '_']])
 
 print("Processing Data....")
-processed_train, processed_test = preprocessing_signal_train_test(train['Signal'], test['Signal'])
-train['Signal'] = processed_train
-test['Signal'] = processed_test
+# processed_train, processed_test = preprocessing_signal_train_test(train['Signal'], test['Signal'])
+# train['Signal'] = processed_train
+# test['Signal'] = processed_test
 
 # train['Signal'] = preprocessing_signal(train['Signal'])
 #
 # test['Signal'] = preprocessing_signal(test['Signal'])
+#
+# train['Signal'] = train['Signal'].astype('float16')
+# test['Signal'] = test['Signal'].astype('float16')
 
 print("Data Processed Successfully ")
 
 
+# arr = np.array([])
+# for c in [10]:
+#     for epoch in range(train['Signal'].shape[0]):
+#         for i in range(1,train['Signal'].shape[1]):
+#             if(train['Flashing'][epoch][i] < 0.5 and train['Flashing'][epoch][i-1] > 0.5):
+#                 sample = np.array(train['Signal'][epoch][i-24:i+window-24,channel])
+
+#                 filteredSample = preprocessing_signal(sample)
+#                 arr = np.append(arr,filteredSample)
+# pprint(arr)            
+# arr = scaler.fit_transform(arr)
+
+#
 def char_accuracy(X, characters, clf, prob_func=None):
     if prob_func is None:
         prob_func = clf.decision_function
@@ -142,11 +158,11 @@ def indeces_of_char(c):
 
 
 def prepare_X_y_and_characters(data, characters):
-    p300_res = np.zeros(window)
-    nonp300_res = np.zeros(window)
+    p300_res = np.zeros(window*channels.shape[0])
+    nonp300_res = np.zeros(window*channels.shape[0])
     data_shape = data['Signal'].shape
     target = np.zeros(data_shape[0] * 12, int)
-    responses = np.zeros((data_shape[0] * 12, window), float)
+    responses = np.zeros((data_shape[0] * 12, window*channels.shape[0]), float)
     for epoch in range(data_shape[0]):
         epoch_char = characters[epoch]
         row, col = indeces_of_char(epoch_char)
@@ -157,12 +173,14 @@ def prepare_X_y_and_characters(data, characters):
             if data['Flashing'][epoch][i] < 0.5 < data['Flashing'][epoch][i - 1]:
                 rowcol = int(data['StimulusCode'][epoch][i - 1])
 
-                extracted_sample = data['Signal'][epoch][i - 24:i + window - 24, 10]
-                responses[epoch * 12 + rowcol - 1] += extracted_sample
-                if row == rowcol or col == rowcol:
-                    p300_res += extracted_sample
-                else:
-                    nonp300_res += extracted_sample
+                for ch in channels:
+                    extracted_sample = data['Signal'][epoch][i - 24:i + window - 24, ch]
+                    responses[epoch * 12 + rowcol - 1][ch*window:ch*window+window] += extracted_sample
+                    if row == rowcol or col == rowcol:
+                        p300_res[ch*window:ch*window+window] += extracted_sample
+                    else:
+                        nonp300_res[ch*window:ch*window+window] += extracted_sample
+
 
     responses = responses / 15
     p300_res = p300_res / (2 * 15 * data_shape[0])
@@ -195,19 +213,18 @@ def prepare_balanced(X, y):
 
 X_balanced, y_balanced = prepare_balanced(X_train, y_train)
 
-# def graphDrawer(arr, arr2):
-#     x_axis = np.array(range(window)) / 240
-#     plt.plot(x_axis, arr, color='#188038', label='P300')
-#     plt.plot(x_axis, arr2, color='#A1282C', label='Non-P300')
-#
-#     plt.xlabel('Time (s)')
-#     plt.ylabel('Amplitude')
-#     plt.legend()
-#     plt.tight_layout()
-#     plt.show()
-#
-# graphDrawer(p300,nonP300)
+def graphDrawer(arr, arr2):
+    x_axis = np.array(range(window*channels.shape[0])) / 240
+    plt.plot(x_axis, arr, color='#188038', label='P300')
+    plt.plot(x_axis, arr2, color='#A1282C', label='Non-P300')
 
+    plt.xlabel('Time (s)')
+    plt.ylabel('Amplitude')
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+graphDrawer(p300,nonP300)
 
 
 print("Training")
@@ -219,7 +236,6 @@ print("Done")
 # Balabizo = lambda x: svc_unbalanced.predict_proba(x)[:, 1]
 print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_unbalanced), "%")
 # print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_unbalanced, Balabizo), "%")
-
 print("Test Character accuracy", char_accuracy(X_test, test_characters, svc_unbalanced), "%")
 
 print("Training")
@@ -228,9 +244,10 @@ svc_balanced.fit(X_balanced, y_balanced)
 print("Score on training data SVM RBF balanced: {}".format(svc_balanced.score(X_train, y_train)))
 print("Score on test data SVM RBF balanced: {}".format(svc_balanced.score(X_test, y_test)))
 print("Done")
-#
-print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_balanced), "%")
-print("Test Character accuracy", char_accuracy(X_test, test_characters, svc_balanced), "%")
+print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_unbalanced), "%")
+# print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_unbalanced, Balabizo), "%")
+print("Test Character accuracy", char_accuracy(X_test, test_characters, svc_unbalanced), "%")
+
 
 print("Training")
 svc_unbalanced = svm.SVC(kernel='linear', probability=True)

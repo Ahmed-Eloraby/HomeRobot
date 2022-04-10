@@ -1,17 +1,12 @@
 import numpy as np
 from matplotlib import pyplot as plt
-import pandas as pd
+from sklearn.decomposition import PCA
+
 import scipy.io
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.utils import shuffle
-from sklearn.model_selection import train_test_split
-from sklearn import svm
-from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
-from sklearn import metrics  # Import scikit-learn metrics module for accuracy calculation
-from sklearn import metrics
 
-from sklearn.preprocessing import normalize
-from scipy.stats.mstats import winsorize
+from sklearn import svm
+from sklearn.ensemble import RandomForestClassifier
 
 from pprint import pprint
 
@@ -32,7 +27,7 @@ highcut_freq = 20
 from scipy.fft import rfft, irfft, rfftfreq, fft, fftfreq, ifft
 
 from scipy.signal import butter, lfilter
-x1
+
 
 def butter_bandpass(lowcut, highcut, fs):
     nyq = 0.5 * fs
@@ -113,10 +108,26 @@ test['Signal'] = processed_test
 # train['Signal'] = preprocessing_signal(train['Signal'])
 #
 # test['Signal'] = preprocessing_signal(test['Signal'])
+#
+# train['Signal'] = train['Signal'].astype('float16')
+# test['Signal'] = test['Signal'].astype('float16')
 
 print("Data Processed Successfully ")
 
 
+# arr = np.array([])
+# for c in [10]:
+#     for epoch in range(train['Signal'].shape[0]):
+#         for i in range(1,train['Signal'].shape[1]):
+#             if(train['Flashing'][epoch][i] < 0.5 and train['Flashing'][epoch][i-1] > 0.5):
+#                 sample = np.array(train['Signal'][epoch][i-24:i+window-24,channel])
+
+#                 filteredSample = preprocessing_signal(sample)
+#                 arr = np.append(arr,filteredSample)
+# pprint(arr)            
+# arr = scaler.fit_transform(arr)
+
+#
 def char_accuracy(X, characters, clf, prob_func=None):
     if prob_func is None:
         prob_func = clf.decision_function
@@ -128,7 +139,6 @@ def char_accuracy(X, characters, clf, prob_func=None):
         col = np.argmax(score[:6]) + 1
         predicted_char = matrix[row - 7][col - 1]
         target_char = characters[i]
-        # print((i, target_char, predicted_char, row, col))
         if target_char == predicted_char:
             correct_predictions_count += 1
     return correct_predictions_count / len(characters)
@@ -142,11 +152,11 @@ def indeces_of_char(c):
 
 
 def prepare_X_y_and_characters(data, characters):
-    p300_res = np.zeros(window)
-    nonp300_res = np.zeros(window)
+    p300_res = np.zeros(window * channels.shape[0])
+    nonp300_res = np.zeros(window * channels.shape[0])
     data_shape = data['Signal'].shape
     target = np.zeros(data_shape[0] * 12, int)
-    responses = np.zeros((data_shape[0] * 12, window), float)
+    responses = np.zeros((data_shape[0] * 12, window * channels.shape[0]), float)
     for epoch in range(data_shape[0]):
         epoch_char = characters[epoch]
         row, col = indeces_of_char(epoch_char)
@@ -157,12 +167,13 @@ def prepare_X_y_and_characters(data, characters):
             if data['Flashing'][epoch][i] < 0.5 < data['Flashing'][epoch][i - 1]:
                 rowcol = int(data['StimulusCode'][epoch][i - 1])
 
-                extracted_sample = data['Signal'][epoch][i - 24:i + window - 24, 10]
-                responses[epoch * 12 + rowcol - 1] += extracted_sample
-                if row == rowcol or col == rowcol:
-                    p300_res += extracted_sample
-                else:
-                    nonp300_res += extracted_sample
+                for ch in channels:
+                    extracted_sample = data['Signal'][epoch][i - 24:i + window - 24, ch]
+                    responses[epoch * 12 + rowcol - 1][ch * window:ch * window + window] += extracted_sample
+                    if row == rowcol or col == rowcol:
+                        p300_res[ch * window:ch * window + window] += extracted_sample
+                    else:
+                        nonp300_res[ch * window:ch * window + window] += extracted_sample
 
     responses = responses / 15
     p300_res = p300_res / (2 * 15 * data_shape[0])
@@ -173,30 +184,44 @@ def prepare_X_y_and_characters(data, characters):
 
 X_train, y_train, p300, nonP300 = prepare_X_y_and_characters(train, train_characters)
 X_test, y_test, _, _ = prepare_X_y_and_characters(test, test_characters)
-print(X_train[:100])
+
 
 def prepare_balanced(X, y):
     p300_indices = np.where(y == 1)[0]
     non_p300_indices = np.where(y == 0)[0]
     np.random.seed(42)
     non_p300_indices = np.random.choice(non_p300_indices, size=p300_indices.shape[0] + 50, replace=False)
-    pprint(p300_indices.shape)
-    pprint(non_p300_indices.shape)
+
 
     X_balanced = np.append(X[p300_indices], X[non_p300_indices], axis=0)
 
     y_balanced = np.append(np.ones(p300_indices.shape[0]), np.zeros(non_p300_indices.shape[0]))
 
-    pprint(X_balanced.shape)
-    pprint(y_balanced.shape)
 
     return X_balanced, y_balanced
 
 
-X_balanced, y_balanced = prepare_balanced(X_train, y_train)
-
+# components = range(200,600)
+# acc_components = np.array([])
+# for n in components:
+#     pca = PCA(n_components=n)
+#     pca.fit(X_train)
+#     X_PCA = pca.transform(X_train)
+#     X_PCA_Test = pca.transform(X_test)
+#     X_balanced, y_balanced = prepare_balanced(X_PCA, y_train)
+#     svc_balanced = svm.SVC(kernel='rbf', probability=True)
+#     svc_balanced.fit(X_balanced, y_balanced)
+#     # print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_unbalanced, Balabizo), "%")
+#     acc = char_accuracy(X_PCA_Test, test_characters, svc_balanced)
+#     acc_components = np.append(acc_components, acc)
+#     print(n, acc)
+# plt.plot(components, acc_components)
+# plt.tight_layout()
+# plt.show()
+# print(np.argmax(acc_components))
+#
 # def graphDrawer(arr, arr2):
-#     x_axis = np.array(range(window)) / 240
+#     x_axis = np.array(range(window * channels.shape[0])) / 240
 #     plt.plot(x_axis, arr, color='#188038', label='P300')
 #     plt.plot(x_axis, arr2, color='#A1282C', label='Non-P300')
 #
@@ -206,7 +231,15 @@ X_balanced, y_balanced = prepare_balanced(X_train, y_train)
 #     plt.tight_layout()
 #     plt.show()
 #
-# graphDrawer(p300,nonP300)
+#
+# graphDrawer(p300, nonP300)
+
+
+pca = PCA(n_components=569)
+pca.fit(X_train)
+X_train = pca.transform(X_train)
+X_test = pca.transform(X_test)
+X_balanced, y_balanced = prepare_balanced(X_train, y_train)
 
 
 
@@ -219,7 +252,6 @@ print("Done")
 # Balabizo = lambda x: svc_unbalanced.predict_proba(x)[:, 1]
 print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_unbalanced), "%")
 # print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_unbalanced, Balabizo), "%")
-
 print("Test Character accuracy", char_accuracy(X_test, test_characters, svc_unbalanced), "%")
 
 print("Training")
@@ -228,8 +260,8 @@ svc_balanced.fit(X_balanced, y_balanced)
 print("Score on training data SVM RBF balanced: {}".format(svc_balanced.score(X_train, y_train)))
 print("Score on test data SVM RBF balanced: {}".format(svc_balanced.score(X_test, y_test)))
 print("Done")
-#
 print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_balanced), "%")
+# print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_unbalanced, Balabizo), "%")
 print("Test Character accuracy", char_accuracy(X_test, test_characters, svc_balanced), "%")
 
 print("Training")
