@@ -7,6 +7,7 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 from sklearn import svm
 from sklearn.ensemble import RandomForestClassifier
+from scipy.signal import butter, lfilter
 
 from pprint import pprint
 
@@ -25,8 +26,6 @@ lowcut_freq = 0.1
 highcut_freq = 20
 
 from scipy.fft import rfft, irfft, rfftfreq, fft, fftfreq, ifft
-
-from scipy.signal import butter, lfilter
 
 
 def butter_bandpass(lowcut, highcut, fs):
@@ -54,8 +53,13 @@ def butter_bandpass_filter(data, lowcut=lowcut_freq, highcut=highcut_freq, fs=fr
 
 def preprocessing_signal(data):
     res = data
+    avarageSignal = np.zeros(data.shape[0]*data.shape[1])
+    for channel in range(64):
+        avarageSignal += data[:, :, channel].ravel()
+    avarageSignal = avarageSignal/64
     for channel in channels:
         signal = data[:, :, channel].ravel()
+        signal = signal - avarageSignal
         filtered_signal = butter_bandpass_filter(signal, lowcut_freq, highcut_freq, freq)
         res[:, :, channel] = filtered_signal.reshape(data.shape[0], data.shape[1])
     return res
@@ -190,18 +194,16 @@ def prepare_balanced(X, y):
     p300_indices = np.where(y == 1)[0]
     non_p300_indices = np.where(y == 0)[0]
     np.random.seed(42)
-    non_p300_indices = np.random.choice(non_p300_indices, size=p300_indices.shape[0] + 50, replace=False)
-
+    non_p300_indices = np.random.choice(non_p300_indices, size=p300_indices.shape[0], replace=False)
 
     X_balanced = np.append(X[p300_indices], X[non_p300_indices], axis=0)
 
     y_balanced = np.append(np.ones(p300_indices.shape[0]), np.zeros(non_p300_indices.shape[0]))
 
-
     return X_balanced, y_balanced
 
 
-# components = range(200,600)
+# components = range(200,300)
 # acc_components = np.array([])
 # for n in components:
 #     pca = PCA(n_components=n)
@@ -209,7 +211,7 @@ def prepare_balanced(X, y):
 #     X_PCA = pca.transform(X_train)
 #     X_PCA_Test = pca.transform(X_test)
 #     X_balanced, y_balanced = prepare_balanced(X_PCA, y_train)
-#     svc_balanced = svm.SVC(kernel='rbf', probability=True)
+#     svc_balanced = svm.SVC(kernel='linear', probability=True)
 #     svc_balanced.fit(X_balanced, y_balanced)
 #     # print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_unbalanced, Balabizo), "%")
 #     acc = char_accuracy(X_PCA_Test, test_characters, svc_balanced)
@@ -219,7 +221,7 @@ def prepare_balanced(X, y):
 # plt.tight_layout()
 # plt.show()
 # print(np.argmax(acc_components))
-#
+
 # def graphDrawer(arr, arr2):
 #     x_axis = np.array(range(window * channels.shape[0])) / 240
 #     plt.plot(x_axis, arr, color='#188038', label='P300')
@@ -235,78 +237,7 @@ def prepare_balanced(X, y):
 # graphDrawer(p300, nonP300)
 
 
-pca = PCA(n_components=569)
-pca.fit(X_train)
-X_train = pca.transform(X_train)
-X_test = pca.transform(X_test)
 X_balanced, y_balanced = prepare_balanced(X_train, y_train)
-
-
-
-print("Training")
-svc_unbalanced = svm.SVC(kernel='rbf', probability=True)
-svc_unbalanced.fit(X_train, y_train)
-print("Score on training data SVM RBF unbalanced: {}".format(svc_unbalanced.score(X_train, y_train)))
-print("Score on test data SVM RBF unbalanced: {}".format(svc_unbalanced.score(X_test, y_test)))
-print("Done")
-# Balabizo = lambda x: svc_unbalanced.predict_proba(x)[:, 1]
-print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_unbalanced), "%")
-# print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_unbalanced, Balabizo), "%")
-print("Test Character accuracy", char_accuracy(X_test, test_characters, svc_unbalanced), "%")
-
-print("Training")
-svc_balanced = svm.SVC(kernel='rbf', probability=True)
-svc_balanced.fit(X_balanced, y_balanced)
-print("Score on training data SVM RBF balanced: {}".format(svc_balanced.score(X_train, y_train)))
-print("Score on test data SVM RBF balanced: {}".format(svc_balanced.score(X_test, y_test)))
-print("Done")
-print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_balanced), "%")
-# print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_unbalanced, Balabizo), "%")
-print("Test Character accuracy", char_accuracy(X_test, test_characters, svc_balanced), "%")
-
-print("Training")
-svc_unbalanced = svm.SVC(kernel='linear', probability=True)
-svc_unbalanced.fit(X_train, y_train)
-print("Score on training data SVM linear unbalanced: {}".format(svc_unbalanced.score(X_train, y_train)))
-print("Score on test data SVM linear unbalanced: {}".format(svc_unbalanced.score(X_test, y_test)))
-print("Done")
-# Balabizo = lambda x: svc_unbalanced.predict_proba(x)[:, 1]
-print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_unbalanced), "%")
-# print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_unbalanced, Balabizo), "%")
-
-print("Test Character accuracy", char_accuracy(X_test, test_characters, svc_unbalanced), "%")
-
-print("Training")
-svc_balanced = svm.SVC(kernel='linear', probability=True)
-svc_balanced.fit(X_balanced, y_balanced)
-print("Score on training data SVM linear balanced: {}".format(svc_balanced.score(X_train, y_train)))
-print("Score on test data SVM linear balanced: {}".format(svc_balanced.score(X_test, y_test)))
-print("Done")
-#
-print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_balanced), "%")
-print("Test Character accuracy", char_accuracy(X_test, test_characters, svc_balanced), "%")
-
-print("Training")
-svc_unbalanced = svm.SVC(kernel='sigmoid', probability=True)
-svc_unbalanced.fit(X_train, y_train)
-print("Score on training data SVM sigmoid unbalanced: {}".format(svc_unbalanced.score(X_train, y_train)))
-print("Score on test data SVM sigmoid unbalanced: {}".format(svc_unbalanced.score(X_test, y_test)))
-print("Done")
-# Balabizo = lambda x: svc_unbalanced.predict_proba(x)[:, 1]
-print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_unbalanced), "%")
-# print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_unbalanced, Balabizo), "%")
-
-print("Test Character accuracy", char_accuracy(X_test, test_characters, svc_unbalanced), "%")
-
-print("Training")
-svc_balanced = svm.SVC(kernel='sigmoid', probability=True)
-svc_balanced.fit(X_balanced, y_balanced)
-print("Score on training data SVM sigmoid balanced: {}".format(svc_balanced.score(X_train, y_train)))
-print("Score on test data SVM sigmoid balanced: {}".format(svc_balanced.score(X_test, y_test)))
-print("Done")
-#
-print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_balanced), "%")
-print("Test Character accuracy", char_accuracy(X_test, test_characters, svc_balanced), "%")
 
 print("Training LDA Unblalanced")
 lda_unbalanced = LinearDiscriminantAnalysis()
@@ -322,6 +253,9 @@ print("Done")
 print("Train Character accuracy", char_accuracy(X_train, train_characters, lda_unbalanced), "%")
 print("Test Character accuracy", char_accuracy(X_test, test_characters, lda_unbalanced), "%")
 
+print("ــــــــــــــــــــــــــــــــــــــــــــــــــ")
+print("ــــــــــــــــــــــــــــــــــــــــــــــــــ")
+
 print("Training LDA blalanced")
 lda_balanced = LinearDiscriminantAnalysis()
 lda_balanced.fit(X_balanced, y_balanced)
@@ -335,6 +269,132 @@ print("Done")
 
 print("Train Character accuracy", char_accuracy(X_train, train_characters, lda_balanced), "%")
 print("Test Character accuracy", char_accuracy(X_test, test_characters, lda_balanced), "%")
+print("ــــــــــــــــــــــــــــــــــــــــــــــــــ")
+print("ــــــــــــــــــــــــــــــــــــــــــــــــــ")
+
+
+pca = PCA(n_components=274)
+pca.fit(X_train)
+X_train = pca.transform(X_train)
+X_test = pca.transform(X_test)
+X_balanced, y_balanced = prepare_balanced(X_train, y_train)
+
+print("Training")
+svc_unbalanced = svm.SVC(kernel='rbf', probability=True)
+svc_unbalanced.fit(X_train, y_train)
+print("Score on training data SVM RBF unbalanced: {}".format(svc_unbalanced.score(X_train, y_train)))
+print("Score on test data SVM RBF unbalanced: {}".format(svc_unbalanced.score(X_test, y_test)))
+print("Done")
+# Balabizo = lambda x: svc_unbalanced.predict_proba(x)[:, 1]
+print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_unbalanced), "%")
+# print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_unbalanced, Balabizo), "%")
+print("Test Character accuracy", char_accuracy(X_test, test_characters, svc_unbalanced), "%")
+
+print("ــــــــــــــــــــــــــــــــــــــــــــــــــ")
+print("ــــــــــــــــــــــــــــــــــــــــــــــــــ")
+
+
+print("Training")
+svc_balanced = svm.SVC(kernel='rbf', probability=True)
+svc_balanced.fit(X_balanced, y_balanced)
+print("Score on training data SVM RBF balanced: {}".format(svc_balanced.score(X_train, y_train)))
+print("Score on test data SVM RBF balanced: {}".format(svc_balanced.score(X_test, y_test)))
+print("Done")
+print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_balanced), "%")
+# print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_unbalanced, Balabizo), "%")
+print("Test Character accuracy", char_accuracy(X_test, test_characters, svc_balanced), "%")
+
+
+print("ــــــــــــــــــــــــــــــــــــــــــــــــــ")
+print("ــــــــــــــــــــــــــــــــــــــــــــــــــ")
+print("Training")
+svc_unbalanced = svm.SVC(kernel='linear', probability=True)
+svc_unbalanced.fit(X_train, y_train)
+print("Score on training data SVM linear unbalanced: {}".format(svc_unbalanced.score(X_train, y_train)))
+print("Score on test data SVM linear unbalanced: {}".format(svc_unbalanced.score(X_test, y_test)))
+print("Done")
+# Balabizo = lambda x: svc_unbalanced.predict_proba(x)[:, 1]
+print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_unbalanced), "%")
+# print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_unbalanced, Balabizo), "%")
+
+print("Test Character accuracy", char_accuracy(X_test, test_characters, svc_unbalanced), "%")
+
+print("ــــــــــــــــــــــــــــــــــــــــــــــــــ")
+print("ــــــــــــــــــــــــــــــــــــــــــــــــــ")
+print("Training")
+svc_balanced = svm.SVC(kernel='linear', probability=True)
+svc_balanced.fit(X_balanced, y_balanced)
+print("Score on training data SVM linear balanced: {}".format(svc_balanced.score(X_train, y_train)))
+print("Score on test data SVM linear balanced: {}".format(svc_balanced.score(X_test, y_test)))
+print("Done")
+#
+print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_balanced), "%")
+print("Test Character accuracy", char_accuracy(X_test, test_characters, svc_balanced), "%")
+
+print("ــــــــــــــــــــــــــــــــــــــــــــــــــ")
+print("ــــــــــــــــــــــــــــــــــــــــــــــــــ")
+print("Training")
+svc_unbalanced = svm.SVC(kernel='sigmoid', probability=True)
+svc_unbalanced.fit(X_train, y_train)
+print("Score on training data SVM sigmoid unbalanced: {}".format(svc_unbalanced.score(X_train, y_train)))
+print("Score on test data SVM sigmoid unbalanced: {}".format(svc_unbalanced.score(X_test, y_test)))
+print("Done")
+# Balabizo = lambda x: svc_unbalanced.predict_proba(x)[:, 1]
+print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_unbalanced), "%")
+# print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_unbalanced, Balabizo), "%")
+
+print("Test Character accuracy", char_accuracy(X_test, test_characters, svc_unbalanced), "%")
+
+print("ــــــــــــــــــــــــــــــــــــــــــــــــــ")
+print("ــــــــــــــــــــــــــــــــــــــــــــــــــ")
+print("Training")
+svc_balanced = svm.SVC(kernel='sigmoid', probability=True)
+svc_balanced.fit(X_balanced, y_balanced)
+print("Score on training data SVM sigmoid balanced: {}".format(svc_balanced.score(X_train, y_train)))
+print("Score on test data SVM sigmoid balanced: {}".format(svc_balanced.score(X_test, y_test)))
+print("Done")
+#
+print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_balanced), "%")
+print("Test Character accuracy", char_accuracy(X_test, test_characters, svc_balanced), "%")
+
+print("ــــــــــــــــــــــــــــــــــــــــــــــــــ")
+print("ــــــــــــــــــــــــــــــــــــــــــــــــــ")
+
+
+print("Training LDA Unblalanced")
+lda_unbalanced = LinearDiscriminantAnalysis()
+lda_unbalanced.fit(X_train, y_train)
+
+lda_score_train = lda_unbalanced.score(X_train, y_train)  # Coefficient of determination
+lda_score_test = lda_unbalanced.score(X_test, y_test)
+
+print("Score on training data LDA unbalanced: {}".format(lda_score_train))
+print("Score on test data LDA unbalanced: {}".format(lda_score_test))
+print("Done")
+
+print("Train Character accuracy", char_accuracy(X_train, train_characters, lda_unbalanced), "%")
+print("Test Character accuracy", char_accuracy(X_test, test_characters, lda_unbalanced), "%")
+
+print("ــــــــــــــــــــــــــــــــــــــــــــــــــ")
+print("ــــــــــــــــــــــــــــــــــــــــــــــــــ")
+
+
+print("Training LDA blalanced")
+lda_balanced = LinearDiscriminantAnalysis()
+lda_balanced.fit(X_balanced, y_balanced)
+
+lda_score_train = lda_balanced.score(X_train, y_train)  # Coefficient of determination
+lda_score_test = lda_balanced.score(X_test, y_test)
+
+print("Score on training data LDA balanced: {}".format(lda_score_train))
+print("Score on test data LDA balanced: {}".format(lda_score_test))
+print("Done")
+
+print("Train Character accuracy", char_accuracy(X_train, train_characters, lda_balanced), "%")
+print("Test Character accuracy", char_accuracy(X_test, test_characters, lda_balanced), "%")
+
+print("ــــــــــــــــــــــــــــــــــــــــــــــــــ")
+print("ــــــــــــــــــــــــــــــــــــــــــــــــــ")
 
 print("Training Random Forest Unbalanced")
 
@@ -353,12 +413,16 @@ Balabizo = lambda x: rf_unbalanced.predict_proba(x)[:, 1]
 print("Train Character accuracy", char_accuracy(X_train, train_characters, rf_unbalanced, Balabizo), "%")
 print("Test Character accuracy", char_accuracy(X_test, test_characters, rf_unbalanced, Balabizo), "%")
 
+print("ــــــــــــــــــــــــــــــــــــــــــــــــــ")
+print("ــــــــــــــــــــــــــــــــــــــــــــــــــ")
+
+
 print("Training Random Forest balanced")
 
 rf_balanced = RandomForestClassifier(random_state=42, n_estimators=200, min_samples_split=5, min_samples_leaf=2,
                                      max_features='sqrt', max_depth=90)
 
-rf_balanced.fit(X_train, y_train);
+rf_balanced.fit(X_train, y_train)
 rf_score_train = rf_balanced.score(X_balanced, y_balanced)
 rf_score_test = rf_balanced.score(X_test, y_test)
 

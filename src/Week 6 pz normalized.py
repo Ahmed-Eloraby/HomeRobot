@@ -32,7 +32,7 @@ highcut_freq = 20
 from scipy.fft import rfft, irfft, rfftfreq, fft, fftfreq, ifft
 
 from scipy.signal import butter, lfilter
-x1
+
 
 def butter_bandpass(lowcut, highcut, fs):
     nyq = 0.5 * fs
@@ -211,7 +211,7 @@ X_balanced, y_balanced = prepare_balanced(X_train, y_train)
 
 
 print("Training")
-svc_unbalanced = svm.SVC(kernel='rbf', probability=True)
+svc_unbalanced = svm.SVC(C=10, gamma=0.001, kernel='rbf', probability=True)
 svc_unbalanced.fit(X_train, y_train)
 print("Score on training data SVM RBF unbalanced: {}".format(svc_unbalanced.score(X_train, y_train)))
 print("Score on test data SVM RBF unbalanced: {}".format(svc_unbalanced.score(X_test, y_test)))
@@ -223,7 +223,7 @@ print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_u
 print("Test Character accuracy", char_accuracy(X_test, test_characters, svc_unbalanced), "%")
 
 print("Training")
-svc_balanced = svm.SVC(kernel='rbf', probability=True)
+svc_balanced = svm.SVC(C=10, gamma=0.001 ,kernel='rbf', probability=True)
 svc_balanced.fit(X_balanced, y_balanced)
 print("Score on training data SVM RBF balanced: {}".format(svc_balanced.score(X_train, y_train)))
 print("Score on test data SVM RBF balanced: {}".format(svc_balanced.score(X_test, y_test)))

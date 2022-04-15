@@ -1,97 +1,11 @@
-import numpy as np
 from matplotlib import pyplot as plt
-import pandas as pd
 import scipy.io
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.utils import shuffle
-from sklearn.model_selection import train_test_split
 from sklearn import svm
-from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
-from sklearn import metrics  # Import scikit-learn metrics module for accuracy calculation
-from sklearn import metrics
-
-from sklearn.preprocessing import normalize
-from scipy.stats.mstats import winsorize
-
+from sklearn.ensemble import  RandomForestClassifier
 from pprint import pprint
-
-from sklearn.preprocessing import StandardScaler
-
-scaler = StandardScaler()
-
-window = 240
-latency = 0
-channel = 11 - 1  # cz
-#channels = np.array([10,33,48,50,52,55,59,61])
-channels = np.arange(64)
-
-freq = 240
-lowcut_freq = 0.1
-highcut_freq = 20
-
-from scipy.fft import rfft, irfft, rfftfreq, fft, fftfreq, ifft
-
-from scipy.signal import butter, lfilter
-
-
-def butter_bandpass(lowcut, highcut, fs):
-    nyq = 0.5 * fs
-    low = lowcut / nyq
-    high = highcut / nyq
-    b, a = butter(4, [low, high], btype='band')
-    return b, a
-
-
-def butter_bandpass_filter(data, lowcut=lowcut_freq, highcut=highcut_freq, fs=freq):
-    b, a = butter_bandpass(lowcut, highcut, fs)
-    y = lfilter(b, a, data)
-    # f_signal = rfft(data)
-
-    # W = rfftfreq(data.size, d=1 / freq)
-    # cut_f_signal = f_signal.copy()
-    # cut_f_signal[(W > highcut_freq)] = 0
-    # cut_f_signal[(W < lowcut_freq)] = 0
-    #
-    # cut_signal = irfft(cut_f_signal)
-    # y = cut_signal
-    return y
-
-
-def preprocessing_signal(data):
-    res = data
-    for channel in channels:
-        signal = data[:, :, channel].ravel()
-        filtered_signal = butter_bandpass_filter(signal, lowcut_freq, highcut_freq, freq)
-        res[:, :, channel] = filtered_signal.reshape(data.shape[0], data.shape[1])
-    return res
-
-
-def preprocessing_signal_train_test(train, test):
-    train_res = train
-    test_res = test
-    for channel in channels:
-        # ButterWirth Filter
-        train_signal = train[:, :, channel].ravel()
-        filtered_train_signal = butter_bandpass_filter(train_signal, lowcut_freq, highcut_freq, freq)
-        test_signal = test[:, :, channel].ravel()
-        filtered_test_signal = butter_bandpass_filter(test_signal, lowcut_freq, highcut_freq, freq)
-
-        # Normalizing
-        scaler = StandardScaler()
-        mean = filtered_train_signal.mean()
-        std = filtered_train_signal.std()
-        normalized_train_signal = (filtered_train_signal - mean) / std
-        normalized_test_signal = (filtered_test_signal - mean) / std
-
-        # scaler.fit(filtered_train_signal)
-        #
-        # filtered_train_signal = scaler.transform(filtered_train_signal)
-        # filtered_test_signal = scaler.transform(filtered_test_signal)
-
-        train_res[:, :, channel] = normalized_train_signal.reshape(train.shape[0], train.shape[1])
-        test_res[:, :, channel] = normalized_test_signal.reshape(test.shape[0], test.shape[1])
-    return train_res, test_res
-
+from config import *
+from Preprocessing import preprocessing_signal_train_test as preprocess
 
 print('Loading The Data')
 
@@ -106,33 +20,12 @@ matrix = np.array([['A', 'B', 'C', 'D', 'E', 'F'], ['G', 'H', 'I', 'J', 'K', 'L'
                    ['S', 'T', 'U', 'V', 'W', 'X'], ['Y', 'Z', '1', '2', '3', '4'], ['5', '6', '7', '8', '9', '_']])
 
 print("Processing Data....")
-processed_train, processed_test = preprocessing_signal_train_test(train['Signal'], test['Signal'])
+processed_train, processed_test = preprocess(train['Signal'], test['Signal'])
 train['Signal'] = processed_train
 test['Signal'] = processed_test
 
-# train['Signal'] = preprocessing_signal(train['Signal'])
-#
-# test['Signal'] = preprocessing_signal(test['Signal'])
-#
-# train['Signal'] = train['Signal'].astype('float16')
-# test['Signal'] = test['Signal'].astype('float16')
-
 print("Data Processed Successfully ")
 
-
-# arr = np.array([])
-# for c in [10]:
-#     for epoch in range(train['Signal'].shape[0]):
-#         for i in range(1,train['Signal'].shape[1]):
-#             if(train['Flashing'][epoch][i] < 0.5 and train['Flashing'][epoch][i-1] > 0.5):
-#                 sample = np.array(train['Signal'][epoch][i-24:i+window-24,channel])
-
-#                 filteredSample = preprocessing_signal(sample)
-#                 arr = np.append(arr,filteredSample)
-# pprint(arr)            
-# arr = scaler.fit_transform(arr)
-
-#
 def char_accuracy(X, characters, clf, prob_func=None):
     if prob_func is None:
         prob_func = clf.decision_function
@@ -158,11 +51,11 @@ def indeces_of_char(c):
 
 
 def prepare_X_y_and_characters(data, characters):
-    p300_res = np.zeros(window*channels.shape[0])
-    nonp300_res = np.zeros(window*channels.shape[0])
+    p300_res = np.zeros(WINDOW*CHANNELS.shape[0])
+    nonp300_res = np.zeros(WINDOW*CHANNELS.shape[0])
     data_shape = data['Signal'].shape
     target = np.zeros(data_shape[0] * 12, int)
-    responses = np.zeros((data_shape[0] * 12, window*channels.shape[0]), float)
+    responses = np.zeros((data_shape[0] * 12, WINDOW*CHANNELS.shape[0]), float)
     for epoch in range(data_shape[0]):
         epoch_char = characters[epoch]
         row, col = indeces_of_char(epoch_char)
@@ -173,13 +66,13 @@ def prepare_X_y_and_characters(data, characters):
             if data['Flashing'][epoch][i] < 0.5 < data['Flashing'][epoch][i - 1]:
                 rowcol = int(data['StimulusCode'][epoch][i - 1])
 
-                for ch in channels:
-                    extracted_sample = data['Signal'][epoch][i - 24:i + window - 24, ch]
-                    responses[epoch * 12 + rowcol - 1][ch*window:ch*window+window] += extracted_sample
+                for ch in CHANNELS:
+                    extracted_sample = data['Signal'][epoch][i - 24:i + WINDOW - 24, ch]
+                    responses[epoch * 12 + rowcol - 1][ch*WINDOW:ch*WINDOW+WINDOW] += extracted_sample
                     if row == rowcol or col == rowcol:
-                        p300_res[ch*window:ch*window+window] += extracted_sample
+                        p300_res[ch*WINDOW:ch*WINDOW+WINDOW] += extracted_sample
                     else:
-                        nonp300_res[ch*window:ch*window+window] += extracted_sample
+                        nonp300_res[ch*WINDOW:ch*WINDOW+WINDOW] += extracted_sample
 
 
     responses = responses / 15
@@ -214,7 +107,7 @@ def prepare_balanced(X, y):
 X_balanced, y_balanced = prepare_balanced(X_train, y_train)
 
 def graphDrawer(arr, arr2):
-    x_axis = np.array(range(window*channels.shape[0])) / 240
+    x_axis = np.array(range(WINDOW*CHANNELS.shape[0])) / 240
     plt.plot(x_axis, arr, color='#188038', label='P300')
     plt.plot(x_axis, arr2, color='#A1282C', label='Non-P300')
 
@@ -228,7 +121,7 @@ graphDrawer(p300,nonP300)
 
 
 print("Training")
-svc_unbalanced = svm.SVC(kernel='rbf', probability=True)
+svc_unbalanced = svm.SVC(C=10, gamma=0.001, kernel='rbf', probability=True)
 svc_unbalanced.fit(X_train, y_train)
 print("Score on training data SVM RBF unbalanced: {}".format(svc_unbalanced.score(X_train, y_train)))
 print("Score on test data SVM RBF unbalanced: {}".format(svc_unbalanced.score(X_test, y_test)))
@@ -239,7 +132,7 @@ print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_u
 print("Test Character accuracy", char_accuracy(X_test, test_characters, svc_unbalanced), "%")
 
 print("Training")
-svc_balanced = svm.SVC(kernel='rbf', probability=True)
+svc_balanced = svm.SVC(C=10, gamma=0.001, kernel='rbf', probability=True)
 svc_balanced.fit(X_balanced, y_balanced)
 print("Score on training data SVM RBF balanced: {}".format(svc_balanced.score(X_train, y_train)))
 print("Score on test data SVM RBF balanced: {}".format(svc_balanced.score(X_test, y_test)))
@@ -250,7 +143,7 @@ print("Test Character accuracy", char_accuracy(X_test, test_characters, svc_unba
 
 
 print("Training")
-svc_unbalanced = svm.SVC(kernel='linear', probability=True)
+svc_unbalanced = svm.SVC(C=0.1, gamma=1, kernel='linear', probability=True)
 svc_unbalanced.fit(X_train, y_train)
 print("Score on training data SVM linear unbalanced: {}".format(svc_unbalanced.score(X_train, y_train)))
 print("Score on test data SVM linear unbalanced: {}".format(svc_unbalanced.score(X_test, y_test)))
@@ -262,7 +155,7 @@ print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_u
 print("Test Character accuracy", char_accuracy(X_test, test_characters, svc_unbalanced), "%")
 
 print("Training")
-svc_balanced = svm.SVC(kernel='linear', probability=True)
+svc_balanced = svm.SVC(C=0.1, gamma=1, kernel='linear', probability=True)
 svc_balanced.fit(X_balanced, y_balanced)
 print("Score on training data SVM linear balanced: {}".format(svc_balanced.score(X_train, y_train)))
 print("Score on test data SVM linear balanced: {}".format(svc_balanced.score(X_test, y_test)))
