@@ -43,7 +43,7 @@ def preprocessing_signal_train_test(train, test):
     test_avarageSignal = test_avarageSignal / NUMBER_OF_CHANNELS
 
     for channel in CHANNELS:
-        # ButterWirth Filter
+        # ButterWorth Filter
         train_signal = train[:, :, channel].ravel() - train_avarageSignal
         filtered_train_signal = butter_bandpass_filter(train_signal, LOWCUT_FREQ, HIGHCUT_FREQ, FREQUENCY)
         test_signal = test[:, :, channel].ravel() - test_avarageSignal
