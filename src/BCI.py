@@ -5,7 +5,7 @@ import tkinter as tk
 import numpy as np
 
 intensification_time = 100
-darken_time = 300
+darken_time = 200
 epoch_break_time = 2000
 number_of_trials = 15
 number_of_epochs = 2
@@ -83,9 +83,9 @@ time_map = create_time_map()
 row_col_order = np.append(0, np.repeat(row_col_order, 2))
 
 n = (rows + cols) * number_of_trials * number_of_epochs * 2 + 1
-darkened_color = "#222222"
+darkened_color = "#373737"
 color_order = np.full(n, darkened_color)
-intensified_colors = ["#FFFFFF", "#E8873C", "#FE1513", "#FEFF3B", "#E86C3D", "#FF004B"]
+intensified_colors = ["#B464EB", "#FEFF3B", "#00FFF6"]
 total_intensified_colors = np.random.choice(intensified_colors, (rows + cols) * number_of_trials * number_of_epochs,
                                             replace=True)
 color_order[1::2] = total_intensified_colors

@@ -187,15 +187,16 @@ X_balanced, y_balanced = prepare_balanced(X_train, y_train)
 #
 # print("Test Character accuracy", char_accuracy(X_test, test_characters, svc_unbalanced), "%")
 #
-# print("Training")
-# svc_balanced = svm.SVC(kernel='linear', probability=True)
-# svc_balanced.fit(X_balanced, y_balanced)
-# print("Score on training data SVM linear balanced: {}".format(svc_balanced.score(X_train, y_train)))
-# print("Score on test data SVM linear balanced: {}".format(svc_balanced.score(X_test, y_test)))
-# print("Done")
-# #
-# print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_balanced), "%")
-# print("Test Character accuracy", char_accuracy(X_test, test_characters, svc_balanced), "%")
+print("Training")
+svc_balanced = svm.SVC(kernel='linear', probability=True)
+svc_balanced.fit(X_balanced, y_balanced)
+print("Score on training data SVM linear balanced: {}".format(svc_balanced.score(X_train, y_train)))
+print("Score on test data SVM linear balanced: {}".format(svc_balanced.score(X_test, y_test)))
+print("Done")
+#
+print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_balanced), "%")
+print("Test Character accuracy", char_accuracy(X_test, test_characters, svc_balanced), "%")
+
 #
 # print("Training")
 # svc_unbalanced = svm.SVC(kernel='sigmoid', probability=True)
