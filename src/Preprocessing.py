@@ -13,6 +13,7 @@ def butter_bandpass(lowcut, highcut, fs):
 
 
 def butter_bandpass_filter(data, lowcut, highcut, fs):
+    print(highcut)
     b, a = butter_bandpass(lowcut, highcut, fs)
     y = lfilter(b, a, data)
     # f_signal = rfft(data)

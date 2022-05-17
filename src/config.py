@@ -4,7 +4,7 @@ CHARACTER_MATRIX = np.array([['A','B','C','D','E','F'],['G','H','I','J','K','L']
 
 CHANNEL = 10
 
-CHANNELS = range(64)
+CHANNELS = np.arange(64)
 
 NUMBER_OF_CHANNELS = 64
 

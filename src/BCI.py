@@ -5,7 +5,7 @@ import tkinter as tk
 import numpy as np
 
 intensification_time = 100
-darken_time = 200
+darken_time = 300
 epoch_break_time = 2000
 number_of_trials = 15
 number_of_epochs = 2

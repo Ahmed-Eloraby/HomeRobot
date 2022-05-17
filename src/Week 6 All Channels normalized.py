@@ -117,7 +117,7 @@ def graphDrawer(arr, arr2):
     plt.tight_layout()
     plt.show()
 
-graphDrawer(p300,nonP300)
+# graphDrawer(p300,nonP300)
 
 
 # print("Training")
@@ -130,17 +130,18 @@ graphDrawer(p300,nonP300)
 # print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_unbalanced), "%")
 # # print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_unbalanced, Balabizo), "%")
 # print("Test Character accuracy", char_accuracy(X_test, test_characters, svc_unbalanced), "%")
-#
-# print("Training")
-# svc_balanced = svm.SVC(C=10, gamma=0.001, kernel='rbf', probability=True)
-# svc_balanced.fit(X_balanced, y_balanced)
-# print("Score on training data SVM RBF balanced: {}".format(svc_balanced.score(X_train, y_train)))
-# print("Score on test data SVM RBF balanced: {}".format(svc_balanced.score(X_test, y_test)))
-# print("Done")
-# print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_unbalanced), "%")
-# # print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_unbalanced, Balabizo), "%")
-# print("Test Character accuracy", char_accuracy(X_test, test_characters, svc_unbalanced), "%")
-#
+
+print("Training")
+svc_balanced = svm.SVC(C=10, gamma=0.001, kernel='rbf', probability=True)
+svc_balanced.fit(X_balanced, y_balanced)
+print("Score on training data SVM RBF balanced: {}".format(svc_balanced.score(X_train, y_train)))
+print("Score on test data SVM RBF balanced: {}".format(svc_balanced.score(X_test, y_test)))
+print("Done")
+print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_balanced), "%")
+# print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_unbalanced, Balabizo), "%")
+print("Test Character accuracy", char_accuracy(X_test, test_characters, svc_balanced), "%")
+
+# print("_________________________")
 #
 # print("Training")
 # svc_unbalanced = svm.SVC(C=0.1, gamma=1, kernel='linear', probability=True)
@@ -153,18 +154,25 @@ graphDrawer(p300,nonP300)
 # # print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_unbalanced, Balabizo), "%")
 #
 # print("Test Character accuracy", char_accuracy(X_test, test_characters, svc_unbalanced), "%")
-
-print("Training")
-svc_balanced = svm.SVC(C=0.1, gamma=1, kernel='linear', probability=True)
-svc_balanced.fit(X_balanced, y_balanced)
-print("Score on training data SVM linear balanced: {}".format(svc_balanced.score(X_train, y_train)))
-print("Score on test data SVM linear balanced: {}".format(svc_balanced.score(X_test, y_test)))
-print("Done")
 #
-print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_balanced), "%")
-print("Test Character accuracy", char_accuracy(X_test, test_characters, svc_balanced), "%")
-from joblib import dump
-dump(svc_balanced,"model.joblib")
+# print("_________________________")
+#
+#
+# print("Training")
+# svc_balanced = svm.SVC(C=0.1, gamma=1, kernel='linear', probability=True)
+# svc_balanced.fit(X_balanced, y_balanced)
+# print("Score on training data SVM linear balanced: {}".format(svc_balanced.score(X_train, y_train)))
+# print("Score on test data SVM linear balanced: {}".format(svc_balanced.score(X_test, y_test)))
+# print("Done")
+# #
+# print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_balanced), "%")
+# print("Test Character accuracy", char_accuracy(X_test, test_characters, svc_balanced), "%")
+# from joblib import dump
+# dump(svc_balanced,"model.joblib")
+#
+# print("_________________________")
+#
+#
 # print("Training")
 # svc_unbalanced = svm.SVC(kernel='sigmoid', probability=True)
 # svc_unbalanced.fit(X_train, y_train)
@@ -177,6 +185,8 @@ dump(svc_balanced,"model.joblib")
 #
 # print("Test Character accuracy", char_accuracy(X_test, test_characters, svc_unbalanced), "%")
 #
+# print("_________________________")
+#
 # print("Training")
 # svc_balanced = svm.SVC(kernel='sigmoid', probability=True)
 # svc_balanced.fit(X_balanced, y_balanced)
@@ -186,6 +196,8 @@ dump(svc_balanced,"model.joblib")
 # #
 # print("Train Character accuracy", char_accuracy(X_train, train_characters, svc_balanced), "%")
 # print("Test Character accuracy", char_accuracy(X_test, test_characters, svc_balanced), "%")
+#
+# print("_________________________")
 #
 # print("Training LDA Unblalanced")
 # lda_unbalanced = LinearDiscriminantAnalysis()
@@ -201,6 +213,8 @@ dump(svc_balanced,"model.joblib")
 # print("Train Character accuracy", char_accuracy(X_train, train_characters, lda_unbalanced), "%")
 # print("Test Character accuracy", char_accuracy(X_test, test_characters, lda_unbalanced), "%")
 #
+# print("_________________________")
+#
 # print("Training LDA blalanced")
 # lda_balanced = LinearDiscriminantAnalysis()
 # lda_balanced.fit(X_balanced, y_balanced)
@@ -214,6 +228,8 @@ dump(svc_balanced,"model.joblib")
 #
 # print("Train Character accuracy", char_accuracy(X_train, train_characters, lda_balanced), "%")
 # print("Test Character accuracy", char_accuracy(X_test, test_characters, lda_balanced), "%")
+#
+# print("_________________________")
 #
 # print("Training Random Forest Unbalanced")
 #
@@ -231,20 +247,22 @@ dump(svc_balanced,"model.joblib")
 #
 # print("Train Character accuracy", char_accuracy(X_train, train_characters, rf_unbalanced, Balabizo), "%")
 # print("Test Character accuracy", char_accuracy(X_test, test_characters, rf_unbalanced, Balabizo), "%")
-#
-# print("Training Random Forest balanced")
-#
-# rf_balanced = RandomForestClassifier(random_state=42, n_estimators=200, min_samples_split=5, min_samples_leaf=2,
-#                                      max_features='sqrt', max_depth=90)
-#
-# rf_balanced.fit(X_train, y_train);
-# rf_score_train = rf_balanced.score(X_balanced, y_balanced)
-# rf_score_test = rf_balanced.score(X_test, y_test)
-#
-# print('Score on training data Random Forest balanced:: {}'.format(rf_score_train))
-# print('test score: {}'.format(rf_score_test))
-#
-# Balabizo = lambda x: rf_balanced.predict_proba(x)[:, 1]
-#
-# print("Train Character accuracy", char_accuracy(X_train, train_characters, rf_balanced, Balabizo), "%")
-# print("Test Character accuracy", char_accuracy(X_test, test_characters, rf_balanced, Balabizo), "%")
+
+print("_________________________")
+
+print("Training Random Forest balanced")
+
+rf_balanced = RandomForestClassifier(random_state=42, n_estimators=200, min_samples_split=5, min_samples_leaf=2,
+                                     max_features='sqrt', max_depth=90)
+
+rf_balanced.fit(X_balanced, y_balanced)
+rf_score_train = rf_balanced.score(X_balanced, y_balanced)
+rf_score_test = rf_balanced.score(X_test, y_test)
+
+print('Score on training data Random Forest balanced:: {}'.format(rf_score_train))
+print('test score: {}'.format(rf_score_test))
+
+Balabizo = lambda x: rf_balanced.predict_proba(x)[:, 1]
+
+print("Train Character accuracy", char_accuracy(X_train, train_characters, rf_balanced, Balabizo), "%")
+print("Test Character accuracy", char_accuracy(X_test, test_characters, rf_balanced, Balabizo), "%")
