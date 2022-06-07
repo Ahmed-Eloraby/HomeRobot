@@ -117,7 +117,7 @@ def graphDrawer(arr, arr2):
     plt.tight_layout()
     plt.show()
 
-# graphDrawer(p300,nonP300)
+graphDrawer(p300,nonP300)
 
 
 # print("Training")

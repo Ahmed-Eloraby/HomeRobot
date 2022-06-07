@@ -2,9 +2,13 @@ import qi
 import argparse
 import sys
 import math
-
-
+from naoqi import ALProxy
+def function(x):
+    print x
 def main(session):
+    # motionProxy = ALProxy("ALMotion")
+    # motionProxy.moveTo(0,0,1)
+    # motionProxy.moveTo(2,0,0)
     """
     Move To: Small example to make Nao Move To an Objective.
     """

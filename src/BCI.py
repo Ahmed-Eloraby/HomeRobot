@@ -102,8 +102,8 @@ print(time_map.shape, row_col_order.shape, test_data.shape)
 
 
 class Gui:
-    label_color = "#CCCCCC"
-    background_color = "#000000"
+    label_color = "#777777"
+    background_color = "#212121"
     counter_font = ("Helvetica", 50)
 
     def __init__(self, master, Matrix, time_line, s):
@@ -166,7 +166,8 @@ class Gui:
         self.Label_Matrix = np.empty([rows, cols], tk.Label)
         self.prepare_label_matrix()
         self.time = time.time_ns()
-        self.main_frame.after(self.time_line[0][1] - 10, self.simulate)
+        self.onetime = time.time_ns()
+        self.main_frame.after(self.time_line[0][1], self.simulate)
 
     def simulate(self):
         self.Index += 1
@@ -177,8 +178,16 @@ class Gui:
             print(diff, self.s)
             print((diff - self.s) / self.n)
             return
+        finish = time.time_ns()
+        diff = finish - self.onetime
+        diff /= 1e6
+        print(diff, self.time_line[self.Index-1][1])
+        print((diff - self.time_line[self.Index-1][1]) / self.  n)
+        self.onetime = time.time_ns()
+
         line = int(self.time_line[self.Index][2] - 1)
         if line < self.number_of_cols:
+            print(self.Label_Matrix[:, line],line)
             for label in self.Label_Matrix[:, line]:
                 label.config(foreground=self.time_line[self.Index][4],
                              font=("Helvetica", self.time_line[self.Index][3]))
@@ -197,9 +206,10 @@ class Gui:
             self.Label_Matrix[row][col] = tk.Label(self.main_frame, text=MATRIX[row][col],
                                                    foreground=self.time_line[0][4],
                                                    background=self.background_color,
-                                                   font=("Helvetica", self.time_line[0][3]))
+                                                   font=("Helvetica", self.time_line[0][3]),
+                                                   )
             self.Label_Matrix[row][col].grid(row=row, column=col, sticky='nsew',
-                                             pady=(self.screen_height / self.number_of_rows / 4,
+                                             pady=(self.screen_height / self.number_of_rows / 3,
                                                    self.screen_height / self.number_of_rows / 2))
             self.main_frame.grid_columnconfigure(col, weight=1)
             self.main_frame.grid_columnconfigure(row, weight=1)

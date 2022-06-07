@@ -1,20 +1,11 @@
-import numpy as np
-from matplotlib import pyplot as plt
-import pandas as pd
-import scipy.io
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.utils import shuffle
-from sklearn.model_selection import train_test_split
-from sklearn import svm
-from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
-from sklearn import metrics  # Import scikit-learn metrics module for accuracy calculation
-from sklearn import metrics
-
-from sklearn.preprocessing import normalize
-from scipy.stats.mstats import winsorize
-
 from pprint import pprint
 
+import numpy as np
+import scipy.io
+from matplotlib import pyplot as plt
+from sklearn import svm
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
 
 scaler = StandardScaler()
@@ -28,8 +19,6 @@ channels = np.arange(64)
 freq = 240
 lowcut_freq = 0.1
 highcut_freq = 20
-
-from scipy.fft import rfft, irfft, rfftfreq, fft, fftfreq, ifft
 
 from scipy.signal import butter, lfilter
 
@@ -58,22 +47,41 @@ def butter_bandpass_filter(data, lowcut=lowcut_freq, highcut=highcut_freq, fs=fr
 
 
 def preprocessing_signal(data):
+    data_avarageSignal = np.zeros(data.shape[0] * data.shape[1])
+    for channel in range(64):
+        data_avarageSignal += data[:, :, channel].ravel()
+    data_avarageSignal = data_avarageSignal / 64
+
+
+
+
     res = data
     for channel in channels:
-        signal = data[:, :, channel].ravel()
+        signal = data[:, :, channel].ravel() - data_avarageSignal
         filtered_signal = butter_bandpass_filter(signal, lowcut_freq, highcut_freq, freq)
         res[:, :, channel] = filtered_signal.reshape(data.shape[0], data.shape[1])
     return res
 
 
 def preprocessing_signal_train_test(train, test):
+    train_avarageSignal = np.zeros(train.shape[0] * train.shape[1])
+
+    for channel in range(64):
+        train_avarageSignal += train[:, :, channel].ravel()
+    train_avarageSignal = train_avarageSignal / 64
+
+    test_avarageSignal = np.zeros(test.shape[0] * test.shape[1])
+    for channel in range(64):
+        test_avarageSignal += test[:, :, channel].ravel()
+    test_avarageSignal = test_avarageSignal / 64
+
     train_res = train
     test_res = test
     for channel in channels:
         # ButterWirth Filter
-        train_signal = train[:, :, channel].ravel()
+        train_signal = train[:, :, channel].ravel() - train_avarageSignal
         filtered_train_signal = butter_bandpass_filter(train_signal, lowcut_freq, highcut_freq, freq)
-        test_signal = test[:, :, channel].ravel()
+        test_signal = test[:, :, channel].ravel() - test_avarageSignal
         filtered_test_signal = butter_bandpass_filter(test_signal, lowcut_freq, highcut_freq, freq)
 
         # Normalizing
@@ -195,18 +203,18 @@ def prepare_balanced(X, y):
 
 X_balanced, y_balanced = prepare_balanced(X_train, y_train)
 
-# def graphDrawer(arr, arr2):
-#     x_axis = np.array(range(window)) / 240
-#     plt.plot(x_axis, arr, color='#188038', label='P300')
-#     plt.plot(x_axis, arr2, color='#A1282C', label='Non-P300')
-#
-#     plt.xlabel('Time (s)')
-#     plt.ylabel('Amplitude')
-#     plt.legend()
-#     plt.tight_layout()
-#     plt.show()
-#
-# graphDrawer(p300,nonP300)
+def graphDrawer(arr, arr2):
+    x_axis = np.array(range(window)) / 240
+    plt.plot(x_axis, arr, color='#188038', label='P300')
+    plt.plot(x_axis, arr2, color='#A1282C', label='Non-P300')
+
+    plt.xlabel('Time (s)')
+    plt.ylabel('Amplitude')
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+graphDrawer(p300,nonP300)
 
 
 

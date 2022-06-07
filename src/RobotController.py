@@ -4,4 +4,4 @@ import os
 #
 # process = subprocess.Popen(python3_command.split(), stdout=subprocess.PIPE)
 # output, error = process.communicate()  # receive output from the python2 script
-subprocess.call(".\script.bat ad", shell=True )
+subprocess.call(".\callFunction.bat balabizoy", shell=True )
