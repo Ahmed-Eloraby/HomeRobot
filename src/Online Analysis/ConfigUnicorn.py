@@ -4,7 +4,8 @@ NAME = "Test".lower()
 
 INSTRUCTION_MATRIX =np.array([["Forward-Left", "Forward", "Forward-Right"],[ "Left", "Still", "Right"],
                                       ["Backward-Left", "Backward","Backward-Right"]])
-
+INSTRUCTIONS = np.array(["Forward-Left", "Forward", "Forward-Right", "Left", "Still", "Right", "Backward-Left", "Backward",
+                 "Backward-Right"])
 NUMBER_OF_EPOCHS = 50
 
 CHANNEL = 10

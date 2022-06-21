@@ -1,11 +1,8 @@
 import math
 import time
 import tkinter as tk
-import numpy as np
-import h5py
 from ConfigUnicorn import *
-
-hf = h5py.File('BCI.h5', 'w')
+import numpy as np
 
 output_array = []
 current_stimulus = 0
@@ -35,7 +32,7 @@ OUTPUT_TIME = []
 break_epochs = 7
 break_time = 60000
 intensification_time = 94
-darken_time = 299
+darken_time = 300
 epoch_break_time = 2000
 number_of_trials = NUMBER_OF_TRIALS
 number_of_epochs = NUMBER_OF_EPOCHS
@@ -55,7 +52,7 @@ def indeces_of_instruction(c):
 
 
 intensified_font_size = 113
-darkened_font_size =110
+darkened_font_size = 113
 
 
 def number_of_rows_cols(n):
@@ -124,7 +121,6 @@ epoch_numbers = np.repeat(epoch_numbers, number_of_trials * (rows + cols) * 2)
 epoch_numbers = np.append(epoch_numbers, int(0))
 
 
-
 # print(row_col_order)
 
 
@@ -144,20 +140,19 @@ def create_time_map():
 
 
 time_map = create_time_map()
-time_map[0] *= 0.5
+time_map[0] *= 40
 row_col_order = np.append(0, np.repeat(row_col_order, 2))
 
-if number_of_epochs>break_epochs:
-    for i in range(1,int(NUMBER_OF_EPOCHS/break_epochs)):
-        time_map[i*break_epochs*NUMBER_OF_TRIALS*NUMBER_OF_FLASHES*2] = break_time
-
+if number_of_epochs > break_epochs:
+    for i in range(1, int(NUMBER_OF_EPOCHS / break_epochs)+1):
+        time_map[i * break_epochs * NUMBER_OF_TRIALS * NUMBER_OF_FLASHES * 2] = break_time
 
 n = (rows + cols) * number_of_trials * number_of_epochs * 2 + 1
 # darkened_color = "#373737"
 darkened_color = "#1A1A1A"
 
 color_order = np.full(n, darkened_color)
-intensified_colors = ["#FFFFFF",'#FF0000']
+intensified_colors = ["#FFFFFF", '#FF0000']
 total_intensified_colors = np.random.choice(intensified_colors, (rows + cols) * number_of_trials * number_of_epochs,
                                             replace=True)
 color_order[1::2] = total_intensified_colors
@@ -207,7 +202,7 @@ class Gui:
             "Backward-Left": "🢇",
             "Forward-Left": "🢄",
             "Forward-Right": "🢅",
-            "":" "
+            "": " "
         }
         self.start_counter()
 
@@ -248,7 +243,7 @@ class Gui:
                                      text=str(self.time_line[0][5]) + "- " + self.switcher.get(self.time_line[0][0]),
                                      foreground=self.label_color,
                                      background=self.background_color,
-                                     font=self.counter_font, pady=(self.screen_height * 0.01))
+                                     font=15, pady=(self.screen_height * 0.001))
         self.target_label.pack(fill="x")
         screen_factor = 0.9
 
@@ -272,7 +267,8 @@ class Gui:
         global file
         global current_stimulus
         current_stimulus ^= int(self.time_line[self.Index][2])
-        temp = np.array([current_stimulus, self.time_line[self.Index][0], int(time.time_ns() // 1e6), self.time_line[self.Index][5]])
+        temp = np.array([current_stimulus, self.time_line[self.Index][0], int(time.time_ns() // 1e6),
+                         self.time_line[self.Index][5]])
         temp = np.reshape(temp, (1, len(temp)))
         np.savetxt(file, temp, delimiter=',', fmt="%s", newline='\n')
 
@@ -315,7 +311,6 @@ class Gui:
         # if self.time_line[self.Index ][1] > 1000:
         #     self.epoch_number += 1
         epoch_number = "" + str(self.time_line[self.Index][5])
-        print(epoch_number, type(epoch_number))
         self.target_label.config(text=f"{epoch_number}- {self.switcher.get(self.time_line[self.Index][0])}")
         self.updateGlobals()
 

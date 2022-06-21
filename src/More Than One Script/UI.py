@@ -9,7 +9,6 @@ hf = h5py.File('BCI.h5', 'w')
 output_array = []
 current_stimulus = 0
 
-
 from os import path, mkdir,listdir
 if not path.isdir(f"{DATA_PATH}/{NAME}"):
     mkdir(f"{DATA_PATH}/{NAME}")
@@ -135,7 +134,7 @@ def create_time_map():
 
 
 time_map = create_time_map()
-time_map[0] *= 40
+time_map[0] *= 0.5
 row_col_order = np.append(0, np.repeat(row_col_order, 2))
 
 n = (rows + cols) * number_of_trials * number_of_epochs * 2 + 1
@@ -217,7 +216,9 @@ class Gui:
             self.epoch_number=int(1)
 
     def start_simulation(self):
-        self.target_label = tk.Label(root, text=str(self.epoch_number) +" " + self.time_line[0][0], foreground=self.label_color,
+        self.target_label = tk.Label(root,
+                                     text=str(self.time_line[0][5]) + "- " + self.time_line[0][0],
+                                     foreground=self.label_color,
                                      background=self.background_color,
                                      font=self.counter_font, pady=(self.screen_height * 0.01))
         self.target_label.pack(fill="x")
@@ -283,7 +284,9 @@ class Gui:
             for label in self.Label_Matrix[line]:
                 label.config(foreground=self.time_line[self.Index][4],
                              font=("Helvetica", self.time_line[self.Index][3]))
-        self.target_label.config(text=self.time_line[self.Index][0])
+        epoch_number = "" + str(self.time_line[self.Index][5])
+
+        self.target_label.config(text=f"{epoch_number}- {self.time_line[self.Index][0]}")
         self.updateGlobals()
         self.main_frame.after(self.time_line[self.Index][1] - 10, self.simulate)
 
@@ -304,8 +307,12 @@ class Gui:
 
 
 time_line = np.empty(n, dtype=object)
+epoch_numbers = np.arange(1, number_of_epochs + 1, dtype=int)
 
-time_line[:] = (list(zip(test_data, time_map, row_col_order, fonts, color_order)))
+epoch_numbers = np.repeat(epoch_numbers, number_of_trials * (rows + cols) * 2)
+epoch_numbers = np.append(epoch_numbers, int(0))
+
+time_line[:] = (list(zip(test_data, time_map, row_col_order, fonts, color_order, epoch_numbers)))
 # print(
 #     time_line.shape)  # time_line = {"rows": row_col_order, "time": time_map, "chars": test_data, "color": color_order,"font": fonts}
 # print(time_line)

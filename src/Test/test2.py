@@ -1,7 +1,9 @@
-import numpy as np
-import pandas as pd
-data = pd.read_csv("data.csv",header = None).to_numpy()
-print(data)
-# my_data = np.genfromtxt('data.csv',delimiter=',')
-# print(my_data)
-# initial_time = my_data[0,0]
+
+import requests
+
+IP ="http://192.168.43.226/"
+
+while True:
+    x = input()
+    requests.get(IP + str(x))
+
